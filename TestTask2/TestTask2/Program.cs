@@ -42,8 +42,6 @@ namespace TestTask2
                         }
 
                         addressObjects.Add(addressObject);
-
-                        GC.Collect();
                     }
                     while (reader.ReadToNextSibling("Object"));
 
