@@ -8,57 +8,50 @@ namespace TestTask2
 {
     class Program
     {
-        private static bool TryParseXMLADDROBJ(string filePath, 
-                                                out Dictionary<string, byte> addressObjectFields, 
+        private static bool TryParseXMLADDROBJ(string filePath,
+                                                out Dictionary<string, byte> addressObjectFields,
                                                 out List<List<(byte, string)>> addressObjects)
         {
-            addressObjectFields = new Dictionary<string, byte>();
-            addressObjects = new List<List<(byte, string)>>();
-
             try
             {
+                addressObjectFields = new Dictionary<string, byte>();
+                addressObjects = new List<List<(byte, string)>>();
 
-                using (var reader = XmlReader.Create(new StreamReader(filePath)))
-                {
+                using (var reader = XmlReader.Create(filePath)){
 
-                    reader.ReadToDescendant("AddressObjects");
-                    reader.ReadToDescendant("Object");
-
-                    do
+                    while (reader.Read())
                     {
-                        XmlDocument doc = new XmlDocument();
-                        doc.LoadXml(reader.ReadOuterXml());
-                        XmlNode item = doc.DocumentElement;
+                        var addressObject = new List<(byte, string)>(addressObjectFields.Values.Count);
 
-                        var itemAttributes = item.Attributes;
-                        var addressObject = new List<(byte, string)>();
-
-                        foreach (XmlAttribute field in itemAttributes)
+                        if (reader != null && reader.Name == "Object")
                         {
-                            if (!addressObjectFields.ContainsKey(field.Name))
-                                addressObjectFields.Add(field.Name, (byte)addressObjectFields.Values.Count);
+                            while (reader.MoveToNextAttribute())
+                            {
+                                if (!addressObjectFields.ContainsKey(reader.Name))
+                                    addressObjectFields.Add(reader.Name, (byte)addressObjectFields.Values.Count);
 
-                            addressObject.Add((addressObjectFields[field.Name], field.Value));
+                                addressObject.Add((addressObjectFields[reader.Name], reader.Value));
+                            }
+
+                            addressObjects.Add(addressObject);
                         }
-
-                        addressObjects.Add(addressObject);
                     }
-                    while (reader.ReadToNextSibling("Object"));
-
                 }
             }
             catch
             {
+                addressObjectFields = null;
+                addressObjects = null;
                 return false;
             }
-        
+
             return true;
         }
 
         static void Main(string[] args)
         {
             Console.WriteLine("Введите полный путь до файла:");
-            string filePath= Console.ReadLine();
+            string filePath = Console.ReadLine();
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -69,6 +62,8 @@ namespace TestTask2
 
             Console.WriteLine($"Результат: {(result == true ? "удачно" : "не удачно")}");
             Console.WriteLine($"Затраченное время: { stopwatch.ElapsedMilliseconds} миллисекунд");
+
+            Console.ReadKey();
         }
     }
 }
